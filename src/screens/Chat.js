@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Alert } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { ChatManager, TokenProvider } from '@pusher/chatkit-client';
 import Config from 'react-native-config';
+import axios from 'axios';
 
 const CHATKIT_INSTANCE_LOCATOR_ID = Config.CHATKIT_INSTANCE_LOCATOR_ID;
 const CHATKIT_SECRET_KEY = Config.CHATKIT_SECRET_KEY;
 const CHATKIT_TOKEN_PROVIDER_ENDPOINT = Config.CHATKIT_TOKEN_PROVIDER_ENDPOINT;
+const WEB_PURIFY_API_KEY = Config.WEB_PURIFY_API_KEY;
 
 class Chat extends Component {
 
@@ -46,7 +48,9 @@ class Chat extends Component {
         tokenProvider: new TokenProvider({ url: CHATKIT_TOKEN_PROVIDER_ENDPOINT })
       });
 
-      let currentUser = await chatManager.connect();
+      let currentUser = await chatManager.connect({
+        onRemovedFromRoom: this.onRemovedFromRoom
+      });
       this.currentUser = currentUser;
 
       await this.currentUser.subscribeToRoomMultipart({
@@ -78,6 +82,13 @@ class Chat extends Component {
         show_load_earlier: true
       });
     }
+  }
+
+
+  onRemovedFromRoom = (room) => {
+    this.currentUser.disconnect();
+    Alert.alert("Kicked out", "You've been kicked out of the room because of bad behavior.")
+    this.props.navigation.navigate("Login");
   }
 
 
@@ -168,8 +179,28 @@ class Chat extends Component {
 
   onSend = async ([message]) => {
     try {
+      const response = await axios.get(
+        "http://api1.webpurify.com/services/rest/",
+        {
+          params: {
+            method: 'webpurify.live.replace',
+            api_key: WEB_PURIFY_API_KEY,
+            format: 'json',
+            replacesymbol: '*',
+            text: message.text,
+            lang: 'es'
+          }
+        }
+      );
+
+      const filtered_text = response.data.rsp.text;
+
+      if (filtered_text.includes('***')) {
+        Alert.alert("Profanity detected", "You'll only get 2 warnings. After that, you will be banned from using the service.");
+      }
+
       const message_parts = [
-        { type: "text/plain", content: message.text }
+        { type: "text/plain", content: filtered_text }
       ];
 
       await this.currentUser.sendMultipartMessage({

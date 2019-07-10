@@ -93,7 +93,7 @@ class Rooms extends Component {
       Alert.alert("Joined Room", `You are now a member of [${room.name}]`);
       this.goToChatScreen(room);
     } catch (join_room_err) {
-      console.log("error: ", join_room_err);
+      Alert.alert("Cannot join", "You are banned.");
     }
   }
 
