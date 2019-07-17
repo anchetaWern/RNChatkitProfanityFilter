@@ -1,6 +1,8 @@
 # RNChatkitProfanityFilter
 A sample React Native chat app that implements profanity monitoring with WebPurify.
 
+Full tutorial is available at: [https://pusher.com/tutorials/profanity-moderation-react-native-chat](https://pusher.com/tutorials/profanity-moderation-react-native-chat).
+
 ## Prerequisites
 
 -   React Native development environment
